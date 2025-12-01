@@ -1,8 +1,3 @@
-"""
-indexer.py
-Handles recursive file scanning and indexing.
-"""
-
 import os
 import json
 import time
@@ -40,7 +35,7 @@ class FileIndexer:
                             indexed_files.append(indexed_file)
                             count += 1
                     except Exception:
-                        pass # Skip errors silently for cleaner UX
+                        pass
 
         self._index = indexed_files
         if progress_callback:

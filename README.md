@@ -56,5 +56,5 @@ This application requires a running Parallax instance.
 ## Configuration
 
 Settings in `config.py`:
--   `PARALLAX_API_URL`: URL of the Parallax scheduler (default: `http://localhost:3001/v1/chat/completions`).
+-   `PARALLAX_API_URL`: URL of the Parallax API (default: `http://localhost:3001/v1/chat/completions`).
 
