@@ -64,14 +64,17 @@ class MainFrame(wx.Frame):
         btn_sizer.Add(self.btn_browse, flag=wx.RIGHT, border=8)
         
         self.btn_index = wx.Button(panel, label="INDEX", size=(100, 36))
+        self.btn_index.SetToolTip("Scan the selected folder for files")
         self.btn_index.Bind(wx.EVT_BUTTON, self.on_index)
         btn_sizer.Add(self.btn_index, flag=wx.RIGHT, border=8)
         
-        self.btn_save = wx.Button(panel, label="SAVE", size=(80, 36))
+        self.btn_save = wx.Button(panel, label="SAVE INDEX", size=(110, 36))
+        self.btn_save.SetToolTip("Save the current file index to a JSON file")
         self.btn_save.Bind(wx.EVT_BUTTON, self.on_save_index)
         btn_sizer.Add(self.btn_save, flag=wx.RIGHT, border=8)
         
-        self.btn_load = wx.Button(panel, label="LOAD", size=(80, 36))
+        self.btn_load = wx.Button(panel, label="LOAD INDEX", size=(110, 36))
+        self.btn_load.SetToolTip("Load a previously saved file index")
         self.btn_load.Bind(wx.EVT_BUTTON, self.on_load_index)
         btn_sizer.Add(self.btn_load)
         
@@ -99,12 +102,22 @@ class MainFrame(wx.Frame):
         self.lbl_status = wx.StaticText(panel, label="Ready")
         self.lbl_status.SetForegroundColour(config.THEME["text_dim"])
         self.lbl_status.SetFont(wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
-        content_sizer.Add(self.lbl_status, flag=wx.ALIGN_CENTER)
+        content_sizer.Add(self.lbl_status, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=5)
+
+        self.gauge = wx.Gauge(panel, range=100, size=(600, 4), style=wx.GA_SMOOTH)
+        self.gauge.SetBackgroundColour(config.THEME["panel_bg"])
+        content_sizer.Add(self.gauge, flag=wx.ALIGN_CENTER)
+        
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         
         main_sizer.Add(content_sizer, flag=wx.ALIGN_CENTER)
         main_sizer.AddStretchSpacer(1)
         
         panel.SetSizer(main_sizer)
+
+    def on_timer(self, event):
+        self.gauge.Pulse()
 
     def on_browse(self, event):
         dlg = wx.DirDialog(self, "Choose directory", style=wx.DD_DEFAULT_STYLE)
@@ -120,6 +133,7 @@ class MainFrame(wx.Frame):
 
         self.lbl_status.SetLabel("Indexing files...")
         self.btn_index.Disable()
+        self.timer.Start(100)
         threading.Thread(target=self._indexing_worker, args=(root,), daemon=True).start()
 
     def _indexing_worker(self, root):
@@ -129,6 +143,8 @@ class MainFrame(wx.Frame):
         wx.CallAfter(self._indexing_finished, len(files))
 
     def _indexing_finished(self, count):
+        self.timer.Stop()
+        self.gauge.SetValue(0)
         self.btn_index.Enable()
         self.lbl_status.SetLabel(f"Indexed {count} files. Ready.")
 
@@ -140,7 +156,8 @@ class MainFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             try:
                 self.indexer.save_index(dlg.GetPath())
-                self.lbl_status.SetLabel("Index saved.")
+                self.lbl_status.SetLabel("Index saved successfully.")
+                wx.MessageBox("Index saved successfully.", "Success", wx.OK)
             except Exception as e:
                 wx.MessageBox(f"Error: {e}", "Error", wx.OK|wx.ICON_ERROR)
         dlg.Destroy()
@@ -151,7 +168,8 @@ class MainFrame(wx.Frame):
             try:
                 files = self.indexer.load_index(dlg.GetPath())
                 self.indexed_files = files
-                self.lbl_status.SetLabel(f"Loaded {len(files)} files.")
+                self.lbl_status.SetLabel(f"Successfully loaded {len(files)} files.")
+                wx.MessageBox(f"Successfully loaded {len(files)} files from index.", "Success", wx.OK)
             except Exception as e:
                 wx.MessageBox(f"Error: {e}", "Error", wx.OK|wx.ICON_ERROR)
         dlg.Destroy()
@@ -168,6 +186,7 @@ class MainFrame(wx.Frame):
         self.results_sizer.Clear(True)
         self.lbl_status.SetLabel("Refining results using the model running on Parallax...")
         self.btn_search.Disable()
+        self.timer.Start(100)
         
         threading.Thread(target=self._search_worker, args=(query,), daemon=True).start()
 
@@ -179,6 +198,8 @@ class MainFrame(wx.Frame):
             wx.CallAfter(self._search_error, str(e))
 
     def _search_finished(self, results, reasoning):
+        self.timer.Stop()
+        self.gauge.SetValue(0)
         self.btn_search.Enable()
         self.lbl_status.SetLabel(f"Found {len(results)} matches.")
         
@@ -233,6 +254,8 @@ class MainFrame(wx.Frame):
         self.scrolled_window.Thaw()
 
     def _search_error(self, error_msg):
+        self.timer.Stop()
+        self.gauge.SetValue(0)
         self.btn_search.Enable()
         self.lbl_status.SetLabel("Search failed.")
         wx.MessageBox(f"Search Error:\n{error_msg}", "Error", wx.OK|wx.ICON_ERROR)
