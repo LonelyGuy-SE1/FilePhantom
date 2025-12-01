@@ -5,8 +5,7 @@ A local file search agent that uses the model running on [Parallax](https://gith
 ## Overview
 
 This application indexes text files in a chosen directory and allows you to search them.
-1.  **Basic Search**: Filters files using keyword matching.
-2.  **AI-Assisted Refinement**: Sends candidates to the Parallax runtime to be re-ranked by the active model.
+1.  **AI-Assisted Search**: Sends all indexed files to the Parallax runtime to be semantically ranked by the active model based on your natural language query.
 
 ## Prerequisites
 
@@ -58,4 +57,4 @@ This application requires a running Parallax instance.
 
 Settings in `config.py`:
 -   `PARALLAX_API_URL`: URL of the Parallax scheduler (default: `http://localhost:3001/v1/chat/completions`).
--   `TOP_K_CANDIDATES`: Number of files to send to Parallax for re-ranking.
+

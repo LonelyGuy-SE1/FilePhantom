@@ -14,7 +14,6 @@ class IndexedFile:
     size_bytes: int
     modified_time: float
     content: str
-    tokens: List[str] = field(default_factory=list)
     preview: str = ""
 
     def as_dict(self):

@@ -1,9 +1,3 @@
-"""
-ui_main.py
-
-Clean, minimal UI for Parallax File Finder.
-"""
-
 import wx
 import os
 import threading
@@ -13,7 +7,6 @@ import config
 from indexer import FileIndexer
 from search_engine import SearchEngine
 
-# Set App User Model ID for Taskbar Icon
 try:
     myappid = 'parallax.filefinder.hackathon.v1'
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -46,29 +39,24 @@ class MainFrame(wx.Frame):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.AddStretchSpacer(1)
         
-        # Centered content
         content_sizer = wx.BoxSizer(wx.VERTICAL)
         
-        # Title
         lbl_title = wx.StaticText(panel, label="FILE FINDER")
         lbl_title.SetFont(wx.Font(42, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
         lbl_title.SetForegroundColour(config.THEME["text"])
         content_sizer.Add(lbl_title, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=10)
         
-        # Subtitle
         lbl_sub = wx.StaticText(panel, label="AI-Assisted Local Search (Parallax Runtime)")
         lbl_sub.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
         lbl_sub.SetForegroundColour(config.THEME["text_dim"])
         content_sizer.Add(lbl_sub, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=40)
         
-        # Path input
         self.txt_root_path = wx.TextCtrl(panel, value=os.getcwd(), size=(600, 40), style=wx.BORDER_SIMPLE)
         self.txt_root_path.SetBackgroundColour(config.THEME["panel_bg"])
         self.txt_root_path.SetForegroundColour(config.THEME["text"])
         self.txt_root_path.SetFont(wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
         content_sizer.Add(self.txt_root_path, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=15)
         
-        # Buttons row
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
         
         self.btn_browse = wx.Button(panel, label="BROWSE", size=(100, 36))
@@ -89,7 +77,6 @@ class MainFrame(wx.Frame):
         
         content_sizer.Add(btn_sizer, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=30)
         
-        # Search box
         self.txt_search = wx.TextCtrl(panel, size=(600, 45), style=wx.TE_PROCESS_ENTER|wx.BORDER_SIMPLE)
         self.txt_search.SetBackgroundColour(config.THEME["panel_bg"])
         self.txt_search.SetForegroundColour(config.THEME["text"])
@@ -98,12 +85,10 @@ class MainFrame(wx.Frame):
         self.txt_search.Bind(wx.EVT_TEXT_ENTER, self.on_search)
         content_sizer.Add(self.txt_search, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=15)
         
-        # Search Button
         self.btn_search = wx.Button(panel, label="SEARCH", size=(600, 40))
         self.btn_search.Bind(wx.EVT_BUTTON, self.on_search)
         content_sizer.Add(self.btn_search, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=20)
         
-        # Results area
         self.scrolled_window = wx.ScrolledWindow(panel, size=(600, 400), style=wx.VSCROLL|wx.BORDER_NONE)
         self.scrolled_window.SetScrollRate(5, 5)
         self.scrolled_window.SetBackgroundColour(config.THEME["bg"])
@@ -111,7 +96,6 @@ class MainFrame(wx.Frame):
         self.scrolled_window.SetSizer(self.results_sizer)
         content_sizer.Add(self.scrolled_window, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=15)
         
-        # Status
         self.lbl_status = wx.StaticText(panel, label="Ready")
         self.lbl_status.SetForegroundColour(config.THEME["text_dim"])
         self.lbl_status.SetFont(wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
@@ -200,25 +184,41 @@ class MainFrame(wx.Frame):
         
         self.scrolled_window.Freeze()
         
+        if reasoning:
+            reasoning_panel = wx.Panel(self.scrolled_window)
+            reasoning_panel.SetBackgroundColour(config.THEME["panel_bg"])
+            r_sizer = wx.BoxSizer(wx.VERTICAL)
+            
+            lbl_reasoning_title = wx.StaticText(reasoning_panel, label="AI Reasoning:")
+            lbl_reasoning_title.SetFont(wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
+            lbl_reasoning_title.SetForegroundColour(config.THEME["accent"])
+            r_sizer.Add(lbl_reasoning_title, flag=wx.LEFT|wx.TOP|wx.RIGHT, border=10)
+            
+            lbl_reasoning = wx.StaticText(reasoning_panel, label=reasoning)
+            lbl_reasoning.SetFont(wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
+            lbl_reasoning.SetForegroundColour(config.THEME["text"])
+            lbl_reasoning.Wrap(560)
+            r_sizer.Add(lbl_reasoning, flag=wx.ALL, border=10)
+            
+            reasoning_panel.SetSizer(r_sizer)
+            self.results_sizer.Add(reasoning_panel, flag=wx.EXPAND|wx.BOTTOM, border=10)
+
         for i, res in enumerate(results):
             result_panel = wx.Panel(self.scrolled_window)
             result_panel.SetBackgroundColour(config.THEME["panel_bg"])
             
             sizer = wx.BoxSizer(wx.VERTICAL)
             
-            # Rank + Name
             lbl_name = wx.StaticText(result_panel, label=f"#{i+1}  {res.file.name}")
             lbl_name.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
             lbl_name.SetForegroundColour(config.THEME["text"])
             sizer.Add(lbl_name, flag=wx.LEFT|wx.TOP|wx.RIGHT, border=10)
             
-            # Path
             lbl_path = wx.StaticText(result_panel, label=res.file.path)
             lbl_path.SetFont(wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
             lbl_path.SetForegroundColour(config.THEME["text_dim"])
             sizer.Add(lbl_path, flag=wx.LEFT|wx.RIGHT, border=10)
             
-            # Preview Snippet
             preview_text = res.file.preview[:150] + "..." if len(res.file.preview) > 150 else res.file.preview
             lbl_preview = wx.StaticText(result_panel, label=preview_text)
             lbl_preview.SetFont(wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))

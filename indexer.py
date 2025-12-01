@@ -54,7 +54,6 @@ class FileIndexer:
             with open(path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read(config.MAX_FILE_CHARS)
             
-            tokens = content.lower().split()
             preview = content[:config.PREVIEW_CHARS].replace('\n', ' ').strip()
             if len(content) > config.PREVIEW_CHARS:
                 preview += "..."
@@ -66,7 +65,6 @@ class FileIndexer:
                 size_bytes=stats.st_size,
                 modified_time=stats.st_mtime,
                 content=content,
-                tokens=tokens,
                 preview=preview
             )
         except Exception:
@@ -93,7 +91,6 @@ class FileIndexer:
                 size_bytes=item.get("size_bytes", 0),
                 modified_time=item.get("modified_time", time.time()),
                 content=content,
-                tokens=content.lower().split() if content else [],
                 preview=preview,
             )
             self._index.append(idx)

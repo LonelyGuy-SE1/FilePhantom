@@ -88,10 +88,10 @@ class ParallaxClient:
 
         except requests.exceptions.RequestException as e:
             print(f"[ParallaxClient] Request Error: {e}")
-            return candidates, f"Parallax API Error: {e}"
+            raise Exception(f"Connection failed: {e}")
         except json.JSONDecodeError as e:
             print(f"[ParallaxClient] JSON Error: {e}. Content: {content}")
-            return candidates, "Failed to parse Parallax response."
+            raise Exception("Invalid JSON response from Parallax.")
         except Exception as e:
             print(f"[ParallaxClient] Unexpected Error: {e}")
-            return candidates, f"Error: {e}"
+            raise e
