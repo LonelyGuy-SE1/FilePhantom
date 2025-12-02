@@ -172,8 +172,14 @@ class MainFrame(wx.Frame):
         threading.Thread(target=self._indexing_worker, args=(root,), daemon=True).start()
 
     def _indexing_worker(self, root):
+        def progress_update(msg):
+            wx.CallAfter(self.lbl_status.SetLabel, msg)
+            # Also log to activity log if it contains file count
+            if "files" in msg.lower():
+                wx.CallAfter(self.log, msg)
+        
         self.indexer.set_root_path(root)
-        files = self.indexer.index_files(progress_callback=lambda msg: wx.CallAfter(self.lbl_status.SetLabel, msg))
+        files = self.indexer.index_files(progress_callback=progress_update)
         self.indexed_files = files
         wx.CallAfter(self._indexing_finished, len(files))
 
