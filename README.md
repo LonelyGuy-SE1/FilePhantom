@@ -51,7 +51,9 @@ This application requires a running Parallax instance.
     ```
 2.  **Browse** to select a folder containing text files.
 3.  Click **INDEX** to scan the files.
-4.  Type a query and click **SEARCH**.
+4.  Type a query and choose a search mode:
+    -   **Hybrid Search (Fast)**: Runs a local semantic search first to find the top 100 most relevant files, then sends only those to the AI. Faster and uses fewer tokens.
+    -   **Full AI Search (Slow)**: Sends ALL indexed files to the AI. Use this when you want the AI to consider every single file, but be aware it is slower and uses more tokens.
 
 ## Configuration
 

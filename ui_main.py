@@ -46,7 +46,7 @@ class MainFrame(wx.Frame):
         lbl_title.SetForegroundColour(config.THEME["text"])
         content_sizer.Add(lbl_title, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=10)
         
-        lbl_sub = wx.StaticText(panel, label="AI-Assisted Local Search (Parallax Runtime)")
+        lbl_sub = wx.StaticText(panel, label="AI-Assisted Local Search (Parallax Powered)")
         lbl_sub.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
         lbl_sub.SetForegroundColour(config.THEME["text_dim"])
         content_sizer.Add(lbl_sub, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=40)
@@ -88,11 +88,33 @@ class MainFrame(wx.Frame):
         self.txt_search.Bind(wx.EVT_TEXT_ENTER, self.on_search)
         content_sizer.Add(self.txt_search, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=15)
         
-        self.btn_search = wx.Button(panel, label="SEARCH", size=(600, 40))
-        self.btn_search.Bind(wx.EVT_BUTTON, self.on_search)
-        content_sizer.Add(self.btn_search, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=20)
+        search_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
         
-        self.scrolled_window = wx.ScrolledWindow(panel, size=(600, 400), style=wx.VSCROLL|wx.BORDER_NONE)
+        self.btn_hybrid = wx.Button(panel, label="Hybrid Search (Fast)", size=(295, 40))
+        self.btn_hybrid.SetToolTip("Semantic search + AI (Faster, saves tokens)")
+        self.btn_hybrid.Bind(wx.EVT_BUTTON, self.on_hybrid_search)
+        search_btn_sizer.Add(self.btn_hybrid, flag=wx.RIGHT, border=10)
+        
+        self.btn_full = wx.Button(panel, label="Full AI Search (Slow)", size=(295, 40))
+        self.btn_full.SetToolTip("Send ALL files to AI (Slower, comprehensive)")
+        self.btn_full.Bind(wx.EVT_BUTTON, self.on_full_ai_search)
+        search_btn_sizer.Add(self.btn_full)
+        
+        content_sizer.Add(search_btn_sizer, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=15)
+        
+        # Activity log section - moved here from bottom
+        lbl_activity = wx.StaticText(panel, label="Activity Log")
+        lbl_activity.SetFont(wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
+        lbl_activity.SetForegroundColour(config.THEME["text_dim"])
+        content_sizer.Add(lbl_activity, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=5)
+        
+        self.txt_log = wx.TextCtrl(panel, size=(600, 80), style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP | wx.BORDER_SIMPLE)
+        self.txt_log.SetBackgroundColour(config.THEME["panel_bg"])
+        self.txt_log.SetForegroundColour(config.THEME["text_dim"])
+        self.txt_log.SetFont(wx.Font(8, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, "Consolas"))
+        content_sizer.Add(self.txt_log, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=15)
+        
+        self.scrolled_window = wx.ScrolledWindow(panel, size=(600, 220), style=wx.VSCROLL|wx.BORDER_NONE)
         self.scrolled_window.SetScrollRate(5, 5)
         self.scrolled_window.SetBackgroundColour(config.THEME["bg"])
         self.results_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -111,6 +133,8 @@ class MainFrame(wx.Frame):
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         
+        self.log("Application started - Ready to index files")
+        
         main_sizer.Add(content_sizer, flag=wx.ALIGN_CENTER)
         main_sizer.AddStretchSpacer(1)
         
@@ -119,18 +143,29 @@ class MainFrame(wx.Frame):
     def on_timer(self, event):
         self.gauge.Pulse()
 
+    def log(self, message):
+        """Add a timestamped log entry to the activity log."""
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        log_entry = f"[{timestamp}] {message}\n"
+        self.txt_log.AppendText(log_entry)
+
     def on_browse(self, event):
         dlg = wx.DirDialog(self, "Choose directory", style=wx.DD_DEFAULT_STYLE)
         if dlg.ShowModal() == wx.ID_OK:
-            self.txt_root_path.SetValue(dlg.GetPath())
+            path = dlg.GetPath()
+            self.txt_root_path.SetValue(path)
+            self.log(f"Selected directory: {path}")
         dlg.Destroy()
 
     def on_index(self, event):
         root = self.txt_root_path.GetValue().strip()
         if not root or not os.path.isdir(root):
+            self.log(f"ERROR: Invalid folder path: {root}")
             wx.MessageBox("Invalid folder.", "Error", wx.OK | wx.ICON_ERROR)
             return
 
+        self.log(f"Starting indexing process for: {root}")
         self.lbl_status.SetLabel("Indexing files...")
         self.btn_index.Disable()
         self.timer.Start(100)
@@ -147,35 +182,54 @@ class MainFrame(wx.Frame):
         self.gauge.SetValue(0)
         self.btn_index.Enable()
         self.lbl_status.SetLabel(f"Indexed {count} files. Ready.")
+        self.log(f"Indexing complete: {count} files indexed")
 
     def on_save_index(self, event):
         if not self.indexed_files:
+            self.log("No index to save")
             wx.MessageBox("No index to save.", "Info", wx.OK)
             return
         dlg = wx.FileDialog(self, "Save Index", wildcard="JSON (*.json)|*.json", style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
         if dlg.ShowModal() == wx.ID_OK:
+            filepath = dlg.GetPath()
             try:
-                self.indexer.save_index(dlg.GetPath())
+                self.indexer.save_index(filepath)
                 self.lbl_status.SetLabel("Index saved successfully.")
+                self.log(f"Index saved to: {filepath}")
                 wx.MessageBox("Index saved successfully.", "Success", wx.OK)
             except Exception as e:
+                self.log(f"ERROR saving index: {e}")
                 wx.MessageBox(f"Error: {e}", "Error", wx.OK|wx.ICON_ERROR)
         dlg.Destroy()
 
     def on_load_index(self, event):
         dlg = wx.FileDialog(self, "Load Index", wildcard="JSON (*.json)|*.json", style=wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
+            filepath = dlg.GetPath()
             try:
-                files = self.indexer.load_index(dlg.GetPath())
+                files = self.indexer.load_index(filepath)
                 self.indexed_files = files
                 self.lbl_status.SetLabel(f"Successfully loaded {len(files)} files.")
+                self.log(f"Loaded index from: {filepath} ({len(files)} files)")
                 wx.MessageBox(f"Successfully loaded {len(files)} files from index.", "Success", wx.OK)
             except Exception as e:
+                self.log(f"ERROR loading index: {e}")
                 wx.MessageBox(f"Error: {e}", "Error", wx.OK|wx.ICON_ERROR)
         dlg.Destroy()
 
     def on_search(self, event):
+        # Default to hybrid if enter is pressed
+        self.on_hybrid_search(event)
+
+    def on_hybrid_search(self, event):
+        self._initiate_search("hybrid")
+
+    def on_full_ai_search(self, event):
+        self._initiate_search("full")
+
+    def _initiate_search(self, mode):
         if not self.indexed_files:
+            self.log("Cannot search: No files indexed")
             wx.MessageBox("Please index or load files first.", "Info", wx.OK)
             return
         
@@ -183,16 +237,23 @@ class MainFrame(wx.Frame):
         if not query:
             return
 
+        mode_desc = "Hybrid (Semantic + AI)" if mode == "hybrid" else "Full AI"
+        self.log(f"Starting {mode_desc} search for: '{query}'")
+        
         self.results_sizer.Clear(True)
-        self.lbl_status.SetLabel("Refining results using the model running on Parallax...")
-        self.btn_search.Disable()
+        
+        msg = "Running hybrid semantic + AI search (fast mode)..." if mode == "hybrid" else "Running full AI search (slow mode, all files)..."
+        self.lbl_status.SetLabel(msg)
+        
+        self.btn_hybrid.Disable()
+        self.btn_full.Disable()
         self.timer.Start(100)
         
-        threading.Thread(target=self._search_worker, args=(query,), daemon=True).start()
+        threading.Thread(target=self._search_worker, args=(query, mode), daemon=True).start()
 
-    def _search_worker(self, query):
+    def _search_worker(self, query, mode):
         try:
-            results, reasoning = self.search_engine.search_parallax(query, self.indexed_files)
+            results, reasoning = self.search_engine.search(query, self.indexed_files, mode=mode)
             wx.CallAfter(self._search_finished, results, reasoning)
         except Exception as e:
             wx.CallAfter(self._search_error, str(e))
@@ -200,8 +261,10 @@ class MainFrame(wx.Frame):
     def _search_finished(self, results, reasoning):
         self.timer.Stop()
         self.gauge.SetValue(0)
-        self.btn_search.Enable()
+        self.btn_hybrid.Enable()
+        self.btn_full.Enable()
         self.lbl_status.SetLabel(f"Found {len(results)} matches.")
+        self.log(f"Search complete: {len(results)} matches found")
         
         self.scrolled_window.Freeze()
         
@@ -256,8 +319,10 @@ class MainFrame(wx.Frame):
     def _search_error(self, error_msg):
         self.timer.Stop()
         self.gauge.SetValue(0)
-        self.btn_search.Enable()
+        self.btn_hybrid.Enable()
+        self.btn_full.Enable()
         self.lbl_status.SetLabel("Search failed.")
+        self.log(f"ERROR: Search failed - {error_msg}")
         wx.MessageBox(f"Search Error:\n{error_msg}", "Error", wx.OK|wx.ICON_ERROR)
 
 if __name__ == "__main__":
