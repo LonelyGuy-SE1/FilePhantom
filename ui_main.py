@@ -8,7 +8,7 @@ from indexer import FileIndexer
 from search_engine import SearchEngine
 
 try:
-    myappid = 'parallax.filefinder.hackathon.v1'
+    myappid = 'parallax.filefinder.v1'
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 except Exception:
     pass

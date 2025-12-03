@@ -1,6 +1,5 @@
 """
-config.py
-Configuration settings for the Parallax File Finder.
+config.py - Configuration settings
 """
 
 PARALLAX_API_URL = "http://localhost:3001/v1/chat/completions"
@@ -10,12 +9,9 @@ PREVIEW_CHARS = 400
 MAX_FILE_CHARS = 200_000
 
 PARALLAX_SYSTEM_PROMPT = (
-    "You are an intelligent file search agent. "
-    "Your task is to analyze the provided file candidates and select the ones that are relevant to the user's query. "
-    "You must understand the user's intent and the content of the files. "
-    "Return a JSON object with two keys: "
-    "1. 'ranked': A list of file IDs (paths) for the matching files, ordered by relevance. Exclude irrelevant files. "
-    "2. 'reasoning': A concise explanation of why these files were selected and how they match the query."
+    "You are a helpful assistant. "
+    "Analyze the provided file candidates and select the ones that match the user's query. "
+    "Return a JSON object with 'ranked' (list of file paths in order of relevance) and 'reasoning' (brief explanation)."
 )
 
 THEME = {

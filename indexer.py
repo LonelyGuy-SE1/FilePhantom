@@ -1,6 +1,5 @@
 import os
 import json
-import time
 from typing import List, Optional, Callable
 from models import IndexedFile
 import config
@@ -84,7 +83,7 @@ class FileIndexer:
                 name=item.get("name", ""),
                 extension=item.get("extension", ""),
                 size_bytes=item.get("size_bytes", 0),
-                modified_time=item.get("modified_time", time.time()),
+                modified_time=item.get("modified_time", 0),
                 content=content,
                 preview=preview,
             )
