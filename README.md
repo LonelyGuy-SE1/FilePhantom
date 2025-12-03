@@ -273,6 +273,19 @@ MIT License - See LICENSE file
 
 ## Demo & Screenshots
 
+Initial GUI
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/5acd9fd5-9c5d-4028-82ae-a5af51bd0785" />
+
+After browsing the desired folder and indexing.
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/54b11170-4405-4aeb-b55a-6f3c3ea85226" />
+
+After a Hybrid Search.
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/698225f5-95bb-4c31-b6bc-3859624b2803" />
+
+After a Full AI Aearch.
+<img width="1366" height="767" alt="image" src="https://github.com/user-attachments/assets/cde00efd-5910-46b9-878b-8ab6fa2db08b" />
+
+
 ### Main Interface
 
 ```
