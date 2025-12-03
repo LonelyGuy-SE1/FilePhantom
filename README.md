@@ -14,10 +14,10 @@ Local file search using semantic understanding and distributed model inference.
 - [Configuration](#configuration)
 - [How to Use Search Modes](#how-to-use-search-modes)
 - [System Design](#system-design)
-- [Common Issues](#common-issues)
+
 - [Demo & Screenshots](#demo--screenshots)
 - [License](#license)
-- [Stack](#stack)
+
 
 ## Problem
 
