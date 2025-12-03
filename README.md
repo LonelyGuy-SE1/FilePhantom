@@ -2,6 +2,22 @@
 
 Local file search using semantic understanding and distributed model inference.
 
+## Table of Contents
+
+- [Problem](#problem)
+- [Solution](#solution)
+- [Features](#features)
+- [Architecture](#architecture)
+- [How It Works](#how-it-works)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [How to Use Search Modes](#how-to-use-search-modes)
+- [System Design](#system-design)
+- [Common Issues](#common-issues)
+- [License](#license)
+- [Stack](#stack)
+
 ## Problem
 
 Finding relevant files when you know some context but not the exact filename is tedious:
