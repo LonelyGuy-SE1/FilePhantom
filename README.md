@@ -6,7 +6,7 @@ Local file search using semantic understanding and distributed model inference.
 
 - [Problem](#problem)
 - [Solution](#solution)
-- [Why Parallax](#why-parallax-?)
+- [Why Parallax](#why-parallax-)
 - [Features](#features)
 - [Architecture](#architecture)
 - [How It Works](#how-it-works)
