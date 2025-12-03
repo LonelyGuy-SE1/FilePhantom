@@ -1,4 +1,4 @@
-# File Finder
+# File Phantom (Local File Search)
 
 Local file search using semantic understanding and distributed model inference.
 
@@ -6,6 +6,7 @@ Local file search using semantic understanding and distributed model inference.
 
 - [Problem](#problem)
 - [Solution](#solution)
+- [Why Parallax](#why-parallax-?)
 - [Features](#features)
 - [Architecture](#architecture)
 - [How It Works](#how-it-works)
@@ -14,7 +15,6 @@ Local file search using semantic understanding and distributed model inference.
 - [Configuration](#configuration)
 - [How to Use Search Modes](#how-to-use-search-modes)
 - [System Design](#system-design)
-
 - [Demo & Screenshots](#demo--screenshots)
 - [License](#license)
 
@@ -34,6 +34,11 @@ File Finder combines:
 - **Local semantic search** — TF-IDF ranking to filter candidates
 - **Distributed inference** — Uses Parallax to run models locally
 - **Two search modes** — Choose between fast or comprehensive
+
+## Why Parallax ?
+- Privacy, while dealing with files on local systems, privacy is paramount and hence in this use case, the AI model would have to run locally to preserve the privacy of the user.
+- Parallel Execution in order to decrease search time in the best interest of the user.
+- Flexibility to modify various parameters based on the users desire. (Model, Token Limits, Etc.)
 
 ## Features
 
