@@ -274,6 +274,7 @@ MIT License - See LICENSE file
 ## Demo & Screenshots
 
 ### Main Interface
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │         FILE FINDER                                 │
