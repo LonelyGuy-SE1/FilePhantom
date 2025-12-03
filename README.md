@@ -93,7 +93,7 @@ User Query
 
 ```bash
 git https://github.com/LonelyGuy-SE1/FilePhantom.git
-cd Local-File-Seracher
+cd FilePhantom
 ```
 
 2. **Create virtual environment:**
