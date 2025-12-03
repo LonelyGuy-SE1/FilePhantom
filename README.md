@@ -92,7 +92,7 @@ User Query
 1. **Clone repository:**
 
 ```bash
-git https://github.com/LonelyGuy-SE1/Local-File-Seracher.git
+git https://github.com/LonelyGuy-SE1/FilePhantom.git
 cd Local-File-Seracher
 ```
 
