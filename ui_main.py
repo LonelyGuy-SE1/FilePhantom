@@ -41,15 +41,15 @@ class MainFrame(wx.Frame):
         
         content_sizer = wx.BoxSizer(wx.VERTICAL)
         
-        lbl_title = wx.StaticText(panel, label="FILE FINDER")
-        lbl_title.SetFont(wx.Font(42, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
-        lbl_title.SetForegroundColour(config.THEME["text"])
-        content_sizer.Add(lbl_title, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=10)
+        self.lbl_title = wx.StaticText(panel, label="FILE FINDER")
+        self.lbl_title.SetFont(wx.Font(42, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
+        self.lbl_title.SetForegroundColour(config.THEME["text"])
+        content_sizer.Add(self.lbl_title, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=10)
         
-        lbl_sub = wx.StaticText(panel, label="AI-Assisted Local Search (Parallax Powered)")
-        lbl_sub.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
-        lbl_sub.SetForegroundColour(config.THEME["text_dim"])
-        content_sizer.Add(lbl_sub, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=40)
+        self.lbl_sub = wx.StaticText(panel, label="AI-Assisted Local Search (Parallax Powered)")
+        self.lbl_sub.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
+        self.lbl_sub.SetForegroundColour(config.THEME["text_dim"])
+        content_sizer.Add(self.lbl_sub, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=40)
         
         self.txt_root_path = wx.TextCtrl(panel, value=os.getcwd(), size=(600, 40), style=wx.BORDER_SIMPLE)
         self.txt_root_path.SetBackgroundColour(config.THEME["panel_bg"])
@@ -114,7 +114,7 @@ class MainFrame(wx.Frame):
         self.txt_log.SetFont(wx.Font(8, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, "Consolas"))
         content_sizer.Add(self.txt_log, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=15)
         
-        self.scrolled_window = wx.ScrolledWindow(panel, size=(600, 220), style=wx.VSCROLL|wx.BORDER_NONE)
+        self.scrolled_window = wx.ScrolledWindow(panel, size=(600, 400), style=wx.VSCROLL|wx.BORDER_NONE)
         self.scrolled_window.SetScrollRate(5, 5)
         self.scrolled_window.SetBackgroundColour(config.THEME["bg"])
         self.results_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -134,6 +134,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         
         self.log("Application started - Ready to index files")
+        self.title_hidden = False  # Track if title is hidden
         
         main_sizer.Add(content_sizer, flag=wx.ALIGN_CENTER)
         main_sizer.AddStretchSpacer(1)
@@ -149,6 +150,43 @@ class MainFrame(wx.Frame):
         timestamp = datetime.now().strftime("%H:%M:%S")
         log_entry = f"[{timestamp}] {message}\n"
         self.txt_log.AppendText(log_entry)
+    
+    def hide_title_and_expand_results(self):
+        """Hide title/subtitle and expand results area after first search."""
+        if not self.title_hidden:
+            self.lbl_title.Hide()
+            self.lbl_sub.Hide()
+            
+            # Add a spacer at the top for better spacing
+            parent_sizer = self.lbl_title.GetContainingSizer()
+            if parent_sizer:
+                parent_sizer.Insert(0, (0, 10), 0, wx.EXPAND)  
+            
+            self.scrolled_window.SetSize((600, 480))
+            self.Layout()
+            self.title_hidden = True
+    
+    def on_result_click(self, event):
+        """Open file when result panel is clicked."""
+        # Get the panel from the event
+        obj = event.GetEventObject()
+        
+        # If clicked on a label, get the parent panel
+        if isinstance(obj, wx.StaticText):
+            panel = obj.GetParent()
+        else:
+            panel = obj
+        
+        # Get the file path from the panel
+        if hasattr(panel, 'file_path'):
+            file_path = panel.file_path
+            try:
+                # Open file with default application
+                os.startfile(file_path)
+                self.log(f"Opened file: {file_path}")
+            except Exception as e:
+                self.log(f"Failed to open file: {e}")
+                wx.MessageBox(f"Could not open file:\n{file_path}\n\nError: {e}", "Error", wx.OK | wx.ICON_ERROR)
 
     def on_browse(self, event):
         dlg = wx.DirDialog(self, "Choose directory", style=wx.DD_DEFAULT_STYLE)
@@ -242,6 +280,9 @@ class MainFrame(wx.Frame):
         query = self.txt_search.GetValue().strip()
         if not query:
             return
+        
+        # Hide title and expand results on first search
+        self.hide_title_and_expand_results()
 
         mode_desc = "Hybrid (Semantic + AI)" if mode == "hybrid" else "Full AI"
         self.log(f"Starting {mode_desc} search for: '{query}'")
@@ -296,23 +337,31 @@ class MainFrame(wx.Frame):
         for i, res in enumerate(results):
             result_panel = wx.Panel(self.scrolled_window)
             result_panel.SetBackgroundColour(config.THEME["panel_bg"])
+            result_panel.SetCursor(wx.Cursor(wx.CURSOR_HAND))  # Show hand cursor on hover
+            
+            # Store file path in panel for click handler
+            result_panel.file_path = res.file.path
+            result_panel.Bind(wx.EVT_LEFT_DOWN, self.on_result_click)
             
             sizer = wx.BoxSizer(wx.VERTICAL)
             
             lbl_name = wx.StaticText(result_panel, label=f"#{i+1}  {res.file.name}")
             lbl_name.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
             lbl_name.SetForegroundColour(config.THEME["text"])
+            lbl_name.Bind(wx.EVT_LEFT_DOWN, self.on_result_click)  # Also bind to label
             sizer.Add(lbl_name, flag=wx.LEFT|wx.TOP|wx.RIGHT, border=10)
             
             lbl_path = wx.StaticText(result_panel, label=res.file.path)
             lbl_path.SetFont(wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
             lbl_path.SetForegroundColour(config.THEME["text_dim"])
+            lbl_path.Bind(wx.EVT_LEFT_DOWN, self.on_result_click)  # Also bind to label
             sizer.Add(lbl_path, flag=wx.LEFT|wx.RIGHT, border=10)
             
             preview_text = res.file.preview[:150] + "..." if len(res.file.preview) > 150 else res.file.preview
             lbl_preview = wx.StaticText(result_panel, label=preview_text)
             lbl_preview.SetFont(wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_NORMAL, False, config.FONT_FAMILY))
             lbl_preview.SetForegroundColour(config.THEME["text_dim"])
+            lbl_preview.Bind(wx.EVT_LEFT_DOWN, self.on_result_click)  # Also bind to label
             sizer.Add(lbl_preview, flag=wx.ALL, border=10)
             
             result_panel.SetSizer(sizer)
