@@ -38,7 +38,7 @@ File Finder combines:
 ## Features
 
 - **Hybrid Search** — Semantic pre-filter + model ranking (faster)
-- **Full AI Search** — Model searches all files (comprehensive)
+- **Full AI Search** — Model searches all files (comprehensive) (Parallel Execution is implemented in order to improve search speed. You can change the number of batches/batch size based on the capacity of your cluster to further speed up the process)
 - **File Indexing** — Scan, cache, and persist file indexes
 - **GUI Application** — Cross-platform desktop interface
 - **Batch Processing** — Efficiently handles large file sets
@@ -54,7 +54,7 @@ User Query
     ↓                   ↓
 [Cached Files] → [TF-IDF or Full Search]
                         ↓
-                [Parallax API]
+                [LLM running on Parallax]
                         ↓
                 [Results Display]
 ```
@@ -64,11 +64,11 @@ User Query
 ### Hybrid Search (Recommended)
 
 1. **Semantic ranking** — TF-IDF scores all files against query
-2. **Select top candidates** — Takes top 100 matches
+2. **Select top candidates** — Takes top 100 matches (Can Be changed)
 3. **Model refinement** — Sends only these to Parallax
 4. **Returns results** — Final ranked list with reasoning
 
-**Use when:** You know some context about the file
+**Use when:** You know some context about the file (required for the initial semantic search).
 
 ### Full AI Search
 
@@ -77,7 +77,7 @@ User Query
 3. **Merge results** — Combines and sorts all matches
 4. **Returns results** — Complete ranking across all files
 
-**Use when:** You want comprehensive search of all files
+**Use when:** You want comprehensive search of all files and are not sure of the exact semantics used in the file.
 
 ## Installation
 
@@ -92,8 +92,8 @@ User Query
 1. **Clone repository:**
 
 ```bash
-git clone https://github.com/LonelyGuy-SE1/file-finder.git
-cd file-finder
+git https://github.com/LonelyGuy-SE1/Local-File-Seracher.git
+cd Local-File-Seracher
 ```
 
 2. **Create virtual environment:**
@@ -112,27 +112,9 @@ pip install -r requirements.txt
 
 4. **Start Parallax locally:**
 
-```bash
-parallax run
-```
+Refer to [Parallax Setup](https://github.com/GradientHQ/parallax/blob/main/docs/user_guide/quick_start.md)
 
-In another terminal, join as worker:
-
-```bash
-parallax join
-```
-
-5. **Verify endpoint:**
-
-```bash
-curl -X POST http://localhost:3001/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"messages": [{"role": "user", "content": "hello"}], "max_tokens": 100, "stream": true}'
-```
-
-Should return streaming response starting with `data: {...}`
-
-6. **Run application:**
+5. **Run application:**
 
 ```bash
 python ui_main.py
@@ -192,26 +174,11 @@ To customize search:
 ### Hybrid Search
 
 Use this when **you know something about the file** (context, keywords, partial path).
-
-Example queries:
-
-- "database connection code"
-- "error handling"
-- "user authentication"
-- "config parsing"
-
 The TF-IDF pre-filter catches semantically similar files, then model ranks them.
 
 ### Full AI Search
 
 Use this when **you want to be thorough** and search everything.
-
-Example scenarios:
-
-- Important search where you can't miss results
-- Small-to-medium datasets (< 50K files)
-- Exploratory search with no context
-
 The model sees all files, so it catches edge cases.
 
 ## System Design
@@ -248,25 +215,6 @@ Query → TF-IDF ranking → Top 100 candidates → Parallax API → Results
 Query → Batch splitting → Parallel API calls → Merge & sort → Results
 ```
 
-## Common Issues
-
-**Connection failed to Parallax**
-
-- Check Parallax is running: `curl http://localhost:3001/v1/chat/completions`
-- Restart: `parallax run` in one terminal, `parallax join` in another
-
-**Search times out**
-
-- Increase timeout in `config.py`: `PARALLAX_TIMEOUT = 300`
-- Use Hybrid search instead of Full
-- Check Parallax is responsive
-
-**No results found**
-
-- Ensure files match `ALLOWED_EXTENSIONS`
-- Try Full search (Hybrid filters more aggressively)
-- Check activity log for errors
-
 ## License
 
 MIT License - See LICENSE file
@@ -286,40 +234,6 @@ After a Full AI Aearch.
 <img width="1366" height="767" alt="image" src="https://github.com/user-attachments/assets/cde00efd-5910-46b9-878b-8ab6fa2db08b" />
 
 
-### Main Interface
-
-```
-┌─────────────────────────────────────────────────────┐
-│         FILE FINDER                                 │
-│  AI-Assisted Local Search (Parallax Powered)        │
-│                                                     │
-│  /path/to/files                [BROWSE] [INDEX]    │
-│                         [SAVE INDEX] [LOAD INDEX]   │
-│                                                     │
-│  [Search query...]                                  │
-│                                                     │
-│  [Hybrid Search (Fast)]  [Full AI Search (Slow)]   │
-│                                                     │
-│  Activity Log:                                      │
-│  [09:15:32] Indexing complete: 5,234 files         │
-│  [09:16:01] Hybrid search requested                │
-│  [09:16:15] Found 12 matches                        │
-│                                                     │
-│  Results:                                           │
-│  ┌─ #1 config.py                                  │
-│  │  /home/user/project/src/config.py               │
-│  │  Configuration and settings management...       │
-│  │                                                  │
-│  ├─ #2 settings.json                               │
-│  │  /home/user/project/config/settings.json        │
-│  │  Application configuration in JSON format...    │
-│  │                                                  │
-│  └─ #3 database.py                                 │
-│     /home/user/project/db/database.py              │
-│     Database connection and query helpers...       │
-└─────────────────────────────────────────────────────┘
-```
-
 ### Workflow
 
 1. **Start Application** → GUI window opens
@@ -329,22 +243,5 @@ After a Full AI Aearch.
 5. **Choose Mode** → Click Hybrid (fast) or Full (comprehensive)
 6. **Review Results** → See ranked matches with explanations
 7. **Open File** → Click any result to open in default app
-
-### Example Queries
-
-- "database connection code"
-- "error handling"
-- "authentication logic"
-- "configuration parsing"
-- "API endpoint definitions"
-
-## Stack
-
-- **Parallax** — Distributed LLM serving
-- **wxPython** — Cross-platform GUI
-- **scikit-learn** — TF-IDF vectorization
-- **Qwen/Llama** — LLM models
-
----
 
 Built for efficient local file discovery with AI assistance.
