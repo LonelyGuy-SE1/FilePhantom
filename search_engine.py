@@ -53,9 +53,78 @@ class SearchEngine:
 
     def ai_search_full(self, query: str, files: List[IndexedFile], max_results: int = 20) -> Tuple[List[SearchResult], str]:
         """
-        Existing behavior: sends all indexed files to the model.
+        Full AI search with parallel batching: splits large file sets into chunks and processes them in parallel.
         """
-        return self._run_parallax_search(query, files, max_results, mode_description="full")
+        if not files:
+            return [], "No files to search."
+        
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        import time
+        
+        batch_size = 300  # Files per batch to stay within context limits
+        batches = [files[i:i + batch_size] for i in range(0, len(files), batch_size)]
+        
+        print(f"[SearchEngine] Full search: {len(files)} files split into {len(batches)} batches")
+        
+        all_results = []
+        
+        # Process batches in parallel with retry logic
+        def process_batch(batch_data):
+            batch_idx, batch = batch_data
+            max_retries = 2
+            retry_delay = 1  # Start with 1 second
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    print(f"[SearchEngine] Processing batch {batch_idx + 1}/{len(batches)}" + 
+                          (f" (attempt {attempt + 1})" if attempt > 0 else ""))
+                    
+                    batch_results, _ = self._run_parallax_search(
+                        query, batch, max_results, 
+                        mode_description=f"full_batch_{batch_idx + 1}"
+                    )
+                    return batch_results
+                    
+                except Exception as e:
+                    if attempt < max_retries:
+                        print(f"[SearchEngine] Batch {batch_idx + 1} failed (attempt {attempt + 1}): {e}. Retrying in {retry_delay}s...")
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                    else:
+                        print(f"[SearchEngine] Batch {batch_idx + 1} failed after {max_retries + 1} attempts: {e}")
+                        return []
+        
+        # Use ThreadPoolExecutor for parallel processing (max 3 concurrent requests)
+        max_workers = min(3, len(batches))  # Limit concurrent requests to avoid overwhelming API
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all batch jobs
+            future_to_batch = {
+                executor.submit(process_batch, (idx, batch)): idx 
+                for idx, batch in enumerate(batches)
+            }
+            
+            # Collect results as they complete
+            for future in as_completed(future_to_batch):
+                try:
+                    batch_results = future.result()
+                    if batch_results:
+                        all_results.extend(batch_results)
+                except Exception as e:
+                    batch_idx = future_to_batch[future]
+                    print(f"[SearchEngine] Batch {batch_idx + 1} failed: {e}")
+        
+        # Sort all results by score (highest first) and limit to max_results
+        all_results.sort(key=lambda x: x.score, reverse=True)
+        final_results = all_results[:max_results]
+        
+        # Simple final reasoning without batch details
+        if final_results:
+            reasoning = f"Searched {len(files)} files and found {len(final_results)} highly relevant matches for your query."
+        else:
+            reasoning = f"Searched {len(files)} files but found no relevant matches for your query."
+        
+        return final_results, reasoning
 
     def ai_search_hybrid(self, query: str, files: List[IndexedFile], top_k: int = 100, max_results: int = 20) -> Tuple[List[SearchResult], str]:
         """
@@ -97,6 +166,8 @@ class SearchEngine:
             "Please select the files that are most relevant to the query. "
             "Return the output as valid JSON."
         )
+        
+        print(f"[SearchEngine] {mode_description} search: {len(files)} files, message size: {len(user_content)} chars")
 
         messages = [
             {"role": "system", "content": config.PARALLAX_SYSTEM_PROMPT},
@@ -106,6 +177,7 @@ class SearchEngine:
         try:
             content = self.parallax_client.get_completion(messages)
         except Exception as e:
+            print(f"[SearchEngine] API call failed: {e}")
             return [], str(e)
 
         try:
@@ -131,9 +203,12 @@ class SearchEngine:
             
             return final_results[:max_results], reasoning
 
-        except json.JSONDecodeError:
-            return [], "Failed to parse AI response."
+        except json.JSONDecodeError as e:
+            print(f"[SearchEngine] JSON parsing error: {e}")
+            print(f"[SearchEngine] Raw AI response (first 500 chars): {content[:500]}")
+            return [], f"Failed to parse AI response. Response preview: {content[:200]}..."
         except Exception as e:
+            print(f"[SearchEngine] Processing error: {e}")
             return [], f"Error processing results: {e}"
 
     def search(self, query: str, index, mode="hybrid") -> Tuple[List[SearchResult], str]:
