@@ -21,6 +21,7 @@ Local file search using semantic understanding and distributed model inference.
 ## Problem
 
 Finding relevant files when you know some context but not the exact filename is tedious:
+
 - Keyword search misses files with synonyms or different phrasing
 - Traditional tools don't understand intent
 - Manual browsing through thousands of files is slow
@@ -28,6 +29,7 @@ Finding relevant files when you know some context but not the exact filename is 
 ## Solution
 
 File Finder combines:
+
 - **Local semantic search** — TF-IDF ranking to filter candidates
 - **Distributed inference** — Uses Parallax to run models locally
 - **Two search modes** — Choose between fast or comprehensive
@@ -79,6 +81,7 @@ User Query
 ## Installation
 
 ### Requirements
+
 - Python 3.8+
 - Parallax cluster running locally
 - wxPython, requests, scikit-learn
@@ -86,12 +89,14 @@ User Query
 ### Setup
 
 1. **Clone repository:**
+
 ```bash
 git clone https://github.com/LonelyGuy-SE1/file-finder.git
 cd file-finder
 ```
 
 2. **Create virtual environment:**
+
 ```bash
 python -m venv .venv
 .venv\Scripts\activate  # Windows
@@ -99,21 +104,25 @@ python -m venv .venv
 ```
 
 3. **Install dependencies:**
+
 ```bash
 pip install -r requirements.txt
 ```
 
 4. **Start Parallax locally:**
+
 ```bash
 parallax run
 ```
 
 In another terminal, join as worker:
+
 ```bash
 parallax join
 ```
 
 5. **Verify endpoint:**
+
 ```bash
 curl -X POST http://localhost:3001/v1/chat/completions \
   -H "Content-Type: application/json" \
@@ -123,6 +132,7 @@ curl -X POST http://localhost:3001/v1/chat/completions \
 Should return streaming response starting with `data: {...}`
 
 6. **Run application:**
+
 ```bash
 python ui_main.py
 ```
@@ -171,6 +181,7 @@ THEME = {
 ```
 
 To customize search:
+
 - Edit `batch_size` in `search_engine.py` for batching
 - Edit `top_k` in `semantic_search()` for hybrid filtering
 - Change `ALLOWED_EXTENSIONS` for file types
@@ -182,6 +193,7 @@ To customize search:
 Use this when **you know something about the file** (context, keywords, partial path).
 
 Example queries:
+
 - "database connection code"
 - "error handling"
 - "user authentication"
@@ -194,6 +206,7 @@ The TF-IDF pre-filter catches semantically similar files, then model ranks them.
 Use this when **you want to be thorough** and search everything.
 
 Example scenarios:
+
 - Important search where you can't miss results
 - Small-to-medium datasets (< 50K files)
 - Exploratory search with no context
@@ -203,16 +216,19 @@ The model sees all files, so it catches edge cases.
 ## System Design
 
 ### UI Layer
+
 - File browsing and indexing controls
 - Search input and mode selection
 - Results display with click-to-open
 
 ### Application Core
+
 - **FileIndexer** — Scans, reads, and caches files
 - **SearchEngine** — Hybrid and full search logic with batching
 - **ParallaxClient** — HTTP client for model inference
 
 ### Parallax Cluster
+
 - Runs LLM locally (no cloud dependency)
 - Handles distributed inference
 - OpenAI-compatible API format
@@ -220,11 +236,13 @@ The model sees all files, so it catches edge cases.
 ### Data Flow
 
 **Hybrid:**
+
 ```
 Query → TF-IDF ranking → Top 100 candidates → Parallax API → Results
 ```
 
 **Full:**
+
 ```
 Query → Batch splitting → Parallel API calls → Merge & sort → Results
 ```
@@ -232,15 +250,18 @@ Query → Batch splitting → Parallel API calls → Merge & sort → Results
 ## Common Issues
 
 **Connection failed to Parallax**
+
 - Check Parallax is running: `curl http://localhost:3001/v1/chat/completions`
 - Restart: `parallax run` in one terminal, `parallax join` in another
 
 **Search times out**
+
 - Increase timeout in `config.py`: `PARALLAX_TIMEOUT = 300`
 - Use Hybrid search instead of Full
 - Check Parallax is responsive
 
 **No results found**
+
 - Ensure files match `ALLOWED_EXTENSIONS`
 - Try Full search (Hybrid filters more aggressively)
 - Check activity log for errors
