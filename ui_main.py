@@ -102,7 +102,7 @@ class MainFrame(wx.Frame):
         
         content_sizer.Add(search_btn_sizer, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=15)
         
-        # Activity log section - moved here from bottom
+        # Activity log
         lbl_activity = wx.StaticText(panel, label="Activity Log")
         lbl_activity.SetFont(wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
         lbl_activity.SetForegroundColour(config.THEME["text_dim"])
@@ -134,7 +134,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         
         self.log("Application started - Ready to index files")
-        self.title_hidden = False  # Track if title is hidden
+        self.title_hidden = False
         
         main_sizer.Add(content_sizer, flag=wx.ALIGN_CENTER)
         main_sizer.AddStretchSpacer(1)
@@ -145,19 +145,19 @@ class MainFrame(wx.Frame):
         self.gauge.Pulse()
 
     def log(self, message):
-        """Add a timestamped log entry to the activity log."""
+        """Append a timestamped entry to the activity log."""
         from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S")
         log_entry = f"[{timestamp}] {message}\n"
         self.txt_log.AppendText(log_entry)
     
     def hide_title_and_expand_results(self):
-        """Hide title/subtitle and expand results area after first search."""
+        """Hide title/subtitle and add top spacing on first search."""
         if not self.title_hidden:
             self.lbl_title.Hide()
             self.lbl_sub.Hide()
             
-            # Add a spacer at the top for better spacing
+            # Insert a small spacer at the top
             parent_sizer = self.lbl_title.GetContainingSizer()
             if parent_sizer:
                 parent_sizer.Insert(0, (0, 10), 0, wx.EXPAND)  
@@ -167,17 +167,17 @@ class MainFrame(wx.Frame):
             self.title_hidden = True
     
     def on_result_click(self, event):
-        """Open file when result panel is clicked."""
-        # Get the panel from the event
+        """Open the clicked file in the default application."""
+        # Get the widget that sent the event
         obj = event.GetEventObject()
         
-        # If clicked on a label, get the parent panel
+        # If a label was clicked, use its parent panel
         if isinstance(obj, wx.StaticText):
             panel = obj.GetParent()
         else:
             panel = obj
         
-        # Get the file path from the panel
+        # Retrieve the file path stored on the panel
         if hasattr(panel, 'file_path'):
             file_path = panel.file_path
             try:
@@ -266,9 +266,11 @@ class MainFrame(wx.Frame):
         self.on_hybrid_search(event)
 
     def on_hybrid_search(self, event):
+        self.log("Hybrid search requested")
         self._initiate_search("hybrid")
 
     def on_full_ai_search(self, event):
+        self.log("Full search requested")
         self._initiate_search("full")
 
     def _initiate_search(self, mode):
@@ -283,6 +285,8 @@ class MainFrame(wx.Frame):
         
         # Hide title and expand results on first search
         self.hide_title_and_expand_results()
+        # Inform user that the UI was adjusted and search will run
+        self.log("Preparing results view and starting search...")
 
         mode_desc = "Hybrid (Semantic + AI)" if mode == "hybrid" else "Full AI"
         self.log(f"Starting {mode_desc} search for: '{query}'")
@@ -299,6 +303,8 @@ class MainFrame(wx.Frame):
         threading.Thread(target=self._search_worker, args=(query, mode), daemon=True).start()
 
     def _search_worker(self, query, mode):
+        # Notify (via UI thread) that the background worker has started
+        wx.CallAfter(self.log, f"Background worker started for '{mode}' search")
         try:
             results, reasoning = self.search_engine.search(query, self.indexed_files, mode=mode)
             wx.CallAfter(self._search_finished, results, reasoning)

@@ -5,13 +5,14 @@ A local file search agent that uses the model running on [Parallax](https://gith
 ## Overview
 
 This application indexes text files in a chosen directory and allows you to search them.
-1.  **AI-Assisted Search**: Sends all indexed files to the Parallax runtime to be semantically ranked by the active model based on your natural language query.
+
+1.  **Semantic Search**: Uses Parallax to semantically rank files based on your query.
 
 ## Prerequisites
 
--   Python 3.8+
--   wxPython
--   Parallax
+- Python 3.8+
+- wxPython
+- Parallax
 
 ## Installation
 
@@ -26,6 +27,7 @@ This application requires a running Parallax instance.
 
 1.  **Start the Scheduler**:
     Run the Parallax scheduler with your desired model.
+
     ```bash
     parallax run -m {model-name} -n {number-of-worker-nodes}
     # Example:
@@ -34,6 +36,7 @@ This application requires a running Parallax instance.
 
 2.  **Join Worker Nodes**:
     In a separate terminal (or on other machines), join the cluster:
+
     ```bash
     parallax join
     # Or if remote: parallax join -s {scheduler-address}
@@ -52,11 +55,11 @@ This application requires a running Parallax instance.
 2.  **Browse** to select a folder containing text files.
 3.  Click **INDEX** to scan the files.
 4.  Type a query and choose a search mode:
-    -   **Hybrid Search (Fast)**: Runs a local semantic search first to find the top 100 most relevant files, then sends only those to the AI. Faster and uses fewer tokens.
-    -   **Full AI Search (Slow)**: Sends ALL indexed files to the AI. Use this when you want the AI to consider every single file, but be aware it is slower and uses more tokens.
+    - **Hybrid Search (Fast)**: Runs a local semantic search first to find the top 100 most relevant files, then sends only those to the AI. Faster and uses fewer tokens.
+    - **Full AI Search (Slow)**: Sends ALL indexed files to the AI. Use this when you want the AI to consider every single file, but be aware it is slower and uses more tokens.
 
 ## Configuration
 
 Settings in `config.py`:
--   `PARALLAX_API_URL`: URL of the Parallax API (default: `http://localhost:3001/v1/chat/completions`).
 
+- `PARALLAX_API_URL`: URL of the Parallax API (default: `http://localhost:3001/v1/chat/completions`).

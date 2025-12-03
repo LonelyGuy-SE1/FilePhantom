@@ -11,15 +11,11 @@ class SearchEngine:
         self.parallax_client = ParallaxClient()
 
     def semantic_search(self, query: str, documents: List[IndexedFile], top_k: int = 100) -> List[IndexedFile]:
-        """
-        Returns a list of the top_k documents most relevant to the query,
-        ordered from most to least relevant using TF-IDF and cosine similarity.
-        """
+        """Return the top_k documents most similar to the query using TF-IDF."""
         if not documents:
             return []
 
-        # Prepare corpus: query + document contents
-        # We'll use the file path and the first 1000 chars of content for the vectorization
+        # Prepare corpus: query + document snippets (path + first 1000 chars)
         doc_texts = [f"{d.path}\n{d.content[:1000]}" for d in documents]
         
         vectorizer = TfidfVectorizer()
@@ -29,11 +25,10 @@ class SearchEngine:
             # Handle case where vocabulary is empty or other vectorizer errors
             return []
 
-        # Calculate cosine similarity between query (index 0) and all docs (indices 1..)
+        # Compute cosine similarity between the query and documents
         cosine_similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
         
-        # Sort by similarity score descending
-        # argsort returns indices that would sort the array, so we reverse it
+        # Sort document indices by similarity (highest first)
         related_docs_indices = cosine_similarities.argsort()[::-1]
         
         top_docs = []
@@ -41,34 +36,28 @@ class SearchEngine:
             if cosine_similarities[i] > 0: # Only return documents with some relevance
                 top_docs.append(documents[i])
         
-        # If no documents had > 0 similarity, fallback to returning top_k or all
-        if not top_docs and documents:
-             # Fallback: just return the first top_k if nothing matched (unlikely with tf-idf unless query is gibberish)
-             # But for strict semantic search, maybe empty is better. 
-             # Let's return empty if really nothing matches, but the user requirement says "select top k".
-             # If similarity is 0, they aren't really "top", but let's stick to the list.
-             pass
+        # If none matched strongly, return an empty list
+        if not top_docs:
+            return []
 
         return top_docs
 
     def ai_search_full(self, query: str, files: List[IndexedFile], max_results: int = 20) -> Tuple[List[SearchResult], str]:
-        """
-        Full AI search with parallel batching: splits large file sets into chunks and processes them in parallel.
-        """
+        """Run a full model-based search over all files in batches."""
         if not files:
             return [], "No files to search."
         
         from concurrent.futures import ThreadPoolExecutor, as_completed
         import time
         
-        batch_size = 300  # Files per batch to stay within context limits
+        batch_size = 300  # Files per batch
         batches = [files[i:i + batch_size] for i in range(0, len(files), batch_size)]
         
         print(f"[SearchEngine] Full search: {len(files)} files split into {len(batches)} batches")
         
         all_results = []
         
-        # Process batches in parallel with retry logic
+        # Process batches in parallel with retry handling
         def process_batch(batch_data):
             batch_idx, batch = batch_data
             max_retries = 2
@@ -114,11 +103,11 @@ class SearchEngine:
                     batch_idx = future_to_batch[future]
                     print(f"[SearchEngine] Batch {batch_idx + 1} failed: {e}")
         
-        # Sort all results by score (highest first) and limit to max_results
+        # Sort results by score (highest first) and limit to max_results
         all_results.sort(key=lambda x: x.score, reverse=True)
         final_results = all_results[:max_results]
         
-        # Simple final reasoning without batch details
+        # Simple summary of the search outcome
         if final_results:
             reasoning = f"Searched {len(files)} files and found {len(final_results)} highly relevant matches for your query."
         else:
@@ -127,9 +116,7 @@ class SearchEngine:
         return final_results, reasoning
 
     def ai_search_hybrid(self, query: str, files: List[IndexedFile], top_k: int = 100, max_results: int = 20) -> Tuple[List[SearchResult], str]:
-        """
-        Hybrid behavior: runs semantic search first, then sends top_k files to the model.
-        """
+        """Run semantic search first, then refine with the model on top candidates."""
         # 1) Run semantic search
         candidate_docs = self.semantic_search(query, files, top_k=top_k)
         
@@ -141,9 +128,7 @@ class SearchEngine:
         return self._run_parallax_search(query, candidate_docs, max_results, mode_description="hybrid")
 
     def _run_parallax_search(self, query: str, files: List[IndexedFile], max_results: int, mode_description: str) -> Tuple[List[SearchResult], str]:
-        """
-        Helper to build prompt and call Parallax.
-        """
+        """Build the prompt, call Parallax, and parse the JSON response."""
         if not files:
             return [], "No files to search."
 
@@ -152,7 +137,7 @@ class SearchEngine:
             preview = f.preview.replace('\n', ' ')[:config.PREVIEW_CHARS]
             candidate_text += f"ID: {f.path}\nName: {f.name}\nPreview: {preview}\n\n"
 
-        # Optional: Customize prompt based on mode
+        # Short note to include in the prompt depending on mode
         mode_note = ""
         if mode_description == "hybrid":
             mode_note = "You are seeing a subset of the most relevant files selected by a semantic search. Choose the best matching files from this subset."
@@ -181,11 +166,12 @@ class SearchEngine:
             return [], str(e)
 
         try:
-            if content.startswith("```json"): 
+            # Strip code fences if the response includes them
+            if content.startswith("```json"):
                 content = content[7:]
             elif content.startswith("```"):
                 content = content[3:]
-            if content.endswith("```"): 
+            if content.endswith("```"):
                 content = content[:-3]
             
             parsed = json.loads(content.strip())
@@ -205,8 +191,8 @@ class SearchEngine:
 
         except json.JSONDecodeError as e:
             print(f"[SearchEngine] JSON parsing error: {e}")
-            print(f"[SearchEngine] Raw AI response (first 500 chars): {content[:500]}")
-            return [], f"Failed to parse AI response. Response preview: {content[:200]}..."
+            print(f"[SearchEngine] Raw response (first 500 chars): {content[:500]}")
+            return [], f"Failed to parse response. Preview: {content[:200]}..."
         except Exception as e:
             print(f"[SearchEngine] Processing error: {e}")
             return [], f"Error processing results: {e}"
