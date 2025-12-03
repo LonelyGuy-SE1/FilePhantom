@@ -15,6 +15,7 @@ Local file search using semantic understanding and distributed model inference.
 - [How to Use Search Modes](#how-to-use-search-modes)
 - [System Design](#system-design)
 - [Common Issues](#common-issues)
+- [Demo & Screenshots](#demo--screenshots)
 - [License](#license)
 - [Stack](#stack)
 
@@ -269,6 +270,59 @@ Query → Batch splitting → Parallel API calls → Merge & sort → Results
 ## License
 
 MIT License - See LICENSE file
+
+## Demo & Screenshots
+
+### Main Interface
+```
+┌─────────────────────────────────────────────────────┐
+│         FILE FINDER                                 │
+│  AI-Assisted Local Search (Parallax Powered)        │
+│                                                     │
+│  /path/to/files                [BROWSE] [INDEX]    │
+│                         [SAVE INDEX] [LOAD INDEX]   │
+│                                                     │
+│  [Search query...]                                  │
+│                                                     │
+│  [Hybrid Search (Fast)]  [Full AI Search (Slow)]   │
+│                                                     │
+│  Activity Log:                                      │
+│  [09:15:32] Indexing complete: 5,234 files         │
+│  [09:16:01] Hybrid search requested                │
+│  [09:16:15] Found 12 matches                        │
+│                                                     │
+│  Results:                                           │
+│  ┌─ #1 config.py                                  │
+│  │  /home/user/project/src/config.py               │
+│  │  Configuration and settings management...       │
+│  │                                                  │
+│  ├─ #2 settings.json                               │
+│  │  /home/user/project/config/settings.json        │
+│  │  Application configuration in JSON format...    │
+│  │                                                  │
+│  └─ #3 database.py                                 │
+│     /home/user/project/db/database.py              │
+│     Database connection and query helpers...       │
+└─────────────────────────────────────────────────────┘
+```
+
+### Workflow
+
+1. **Start Application** → GUI window opens
+2. **Select Folder** → Click BROWSE and choose directory
+3. **Index Files** → Click INDEX, watch progress bar
+4. **Type Query** → Enter natural language search
+5. **Choose Mode** → Click Hybrid (fast) or Full (comprehensive)
+6. **Review Results** → See ranked matches with explanations
+7. **Open File** → Click any result to open in default app
+
+### Example Queries
+
+- "database connection code"
+- "error handling"
+- "authentication logic"
+- "configuration parsing"
+- "API endpoint definitions"
 
 ## Stack
 
