@@ -41,7 +41,7 @@ class MainFrame(wx.Frame):
         
         content_sizer = wx.BoxSizer(wx.VERTICAL)
         
-        self.lbl_title = wx.StaticText(panel, label="FILE FINDER")
+        self.lbl_title = wx.StaticText(panel, label="FILE PHANTOM")
         self.lbl_title.SetFont(wx.Font(42, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, config.FONT_FAMILY))
         self.lbl_title.SetForegroundColour(config.THEME["text"])
         content_sizer.Add(self.lbl_title, flag=wx.ALIGN_CENTER|wx.BOTTOM, border=10)
