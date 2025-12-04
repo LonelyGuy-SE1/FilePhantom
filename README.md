@@ -16,7 +16,6 @@ Local file search using semantic understanding and distributed model inference.
 - [How to Use Search Modes](#how-to-use-search-modes)
 - [System Design](#system-design)
 - [Demo & Screenshots](#demo--screenshots)
-- [License](#license)
 
 
 ## Problem
@@ -222,10 +221,6 @@ Query → TF-IDF ranking → Top 100 candidates → Parallax API → Results
 ```
 Query → Batch splitting → Parallel API calls → Merge & sort → Results
 ```
-
-## License
-
-MIT License - See LICENSE file
 
 ## Demo & Screenshots
 
