@@ -174,6 +174,9 @@ To customize search:
 - Edit `top_k` in `semantic_search()` for hybrid filtering
 - Change `ALLOWED_EXTENSIONS` for file types
 
+Do note that this project is highly customizable based on the user's needs with various parameters that are not mentioned here.
+Most of those parameters have already been set based on an assumption/or myself as a benchmark.
+
 ## How to Use Search Modes
 
 ### Hybrid Search
