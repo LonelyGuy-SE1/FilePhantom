@@ -250,3 +250,5 @@ After a Full AI Aearch.
 7. **Open File** → Click any result to open in default app
 
 Built for efficient local file discovery with AI assistance.
+
+Note: Some edge cases, such as extremely large single files, may not yet be fully optimized in this version.
