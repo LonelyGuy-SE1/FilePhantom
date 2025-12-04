@@ -236,6 +236,8 @@ After a Hybrid Search.
 After a Full AI Aearch.
 <img width="1366" height="767" alt="image" src="https://github.com/user-attachments/assets/cde00efd-5910-46b9-878b-8ab6fa2db08b" />
 
+Demo video : https://x.com/lonelyguyse1/status/1996621020443431025?s=20
+
 
 ### Workflow
 
