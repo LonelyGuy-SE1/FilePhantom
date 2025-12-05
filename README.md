@@ -252,3 +252,5 @@ Demo video : https://x.com/lonelyguyse1/status/1996621020443431025?s=20
 Built for efficient local file discovery with AI assistance.
 
 Note: Some edge cases, such as extremely large single files, may not yet be fully optimized in this version.
+
+(This project was made specifically to test and witness the capabilities of Parallax, there are many more optimizations that can be made for the V2 of the project.)
